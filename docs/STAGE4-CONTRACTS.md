@@ -160,7 +160,7 @@ DLab.WireRouting = {
    * 路由全部导线（纯函数、确定性）。
    * @param {Array<{id,from,to,color}>} wires 顺序即优先级（先接的线优先保持原样）
    * @param {Object} geometry DLab.geometry
-   * @returns {{ byId: Object<string, {id, d, points, adjusted, cost}>, adjustedCount, total }}
+   * @returns {% raw %}{{ byId: Object<string, {id, d, points, adjusted, cost}>, adjustedCount, total }}{% endraw %}
    */
   routeAll: function (wires, geometry) { /* ... */ }
 }
@@ -301,7 +301,7 @@ DLab.Grader = {
   buildTask: function (def) { /* → task */ },
   /**
    * 静默打分：快照开关 → 逐行施加激励 → engine.step(固定时刻) → 读输出 → 恢复开关
-   * @returns {{ok, total, passed, failed, rows:[{in:[0,1], expected:[0], actual:[0], pass:boolean}], message}}
+   * @returns {% raw %}{{ok, total, passed, failed, rows:[{in:[0,1], expected:[0], actual:[0], pass:boolean}], message}}{% endraw %}
    */
   grade: function (engine, task, options) { /* options: {timeMs, restore:true} */ }
 }

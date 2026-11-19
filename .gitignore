@@ -6,6 +6,9 @@ node_modules/
 build/
 artifacts/
 
+# Reference images may contain EXIF/GPS and other privacy data — never publish
+Reference Images/
+
 # OS / editor
 .DS_Store
 Thumbs.db
