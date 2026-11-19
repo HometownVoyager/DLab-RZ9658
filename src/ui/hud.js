@@ -5,15 +5,21 @@
   'use strict';
   var DLab = (global.DLab = global.DLab || {});
 
+  /** 翻译辅助：无 i18n 模块（Node 自测）时原样返回中文回退 */
+  function tr(key, params, fallback) {
+    return (DLab.i18n && typeof DLab.i18n.t === 'function')
+      ? DLab.i18n.t(key, params, fallback) : fallback;
+  }
+
   // 契约第 7 节的 7 色导线颜色板
   var PALETTE = [
-    { color: '#ef4444', name: '红', hint: 'VCC / 电源' },
-    { color: '#1f2937', name: '黑', hint: 'GND / 地' },
-    { color: '#3b82f6', name: '蓝', hint: 'CLK / 时钟' },
-    { color: '#eab308', name: '黄', hint: '信号' },
-    { color: '#22c55e', name: '绿', hint: '输出' },
-    { color: '#f97316', name: '橙', hint: '信号' },
-    { color: '#a855f7', name: '紫', hint: '信号' }
+    { color: '#ef4444', name: '红', hint: 'VCC / 电源', nameKey: 'hud.color.red', hintKey: 'hud.hint.vcc' },
+    { color: '#1f2937', name: '黑', hint: 'GND / 地', nameKey: 'hud.color.black', hintKey: 'hud.hint.gnd' },
+    { color: '#3b82f6', name: '蓝', hint: 'CLK / 时钟', nameKey: 'hud.color.blue', hintKey: 'hud.hint.clk' },
+    { color: '#eab308', name: '黄', hint: '信号', nameKey: 'hud.color.yellow', hintKey: 'hud.hint.signal' },
+    { color: '#22c55e', name: '绿', hint: '输出', nameKey: 'hud.color.green', hintKey: 'hud.hint.output' },
+    { color: '#f97316', name: '橙', hint: '信号', nameKey: 'hud.color.orange', hintKey: 'hud.hint.signal' },
+    { color: '#a855f7', name: '紫', hint: '信号', nameKey: 'hud.color.purple', hintKey: 'hud.hint.signal' }
   ];
 
   var DEFAULT_COLOR = PALETTE[0].color;
@@ -79,6 +85,11 @@
     }
     this.root = containerEl;
     this._build();
+
+    // 语言切换后从自身状态重绘（不依赖 DOM 现有的译文，往返无损）
+    var self = this;
+    this._unsubI18n = (DLab.i18n && typeof DLab.i18n.onChange === 'function')
+      ? DLab.i18n.onChange(function () { self.refreshI18n(); }) : null;
   }
 
   Hud.prototype._build = function () {
@@ -88,15 +99,17 @@
 
     // —— 颜色板 ——
     var colorGroup = el('div', { className: 'hud-group hud-colors' });
-    colorGroup.appendChild(el('span', { className: 'hud-label' }, '导线颜色'));
+    colorGroup.appendChild(el('span', { className: 'hud-label' }, tr('hud.label.color', null, '导线颜色')));
     for (var i = 0; i < PALETTE.length; i++) {
       var item = PALETTE[i];
+      var name = tr(item.nameKey, null, item.name);
+      var hint = tr(item.hintKey, null, item.hint);
       var swatch = el('button', {
         type: 'button',
         className: 'hud-swatch',
         'data-color': item.color,
-        title: item.name + '（' + item.hint + '） ' + item.color,
-        'aria-label': item.name + ' ' + item.hint
+        title: tr('hud.swatch.title', { name: name, hint: hint, color: item.color }, name + '（' + hint + '） ' + item.color),
+        'aria-label': name + ' ' + hint
       });
       swatch.style.backgroundColor = item.color;
       if (item.color === '#1f2937') {
@@ -109,12 +122,12 @@
 
     // —— 操作按钮 ——
     var actionGroup = el('div', { className: 'hud-group hud-actions' });
-    this.undoBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'undo', title: '撤销最近一次接线操作（Ctrl+Z）' }, '撤销');
-    this.redoBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'redo', title: '重做被撤销的操作（Ctrl+Y / Ctrl+Shift+Z）' }, '重做');
-    this.clearBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'clear', title: '删除全部导线（可撤销）' }, '清空导线');
-    this.exportBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'export', title: '导出为 .dlab.json 工程文件' }, '导出');
-    this.importBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'import', title: '从 .dlab.json 工程文件导入' }, '导入');
-    this.muteBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'mute', title: '静音 / 取消静音板载音频（蜂鸣器与扬声器）' }, '静音');
+    this.undoBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'undo', title: tr('hud.title.undo', null, '撤销最近一次接线操作（Ctrl+Z）') }, tr('hud.action.undo', null, '撤销'));
+    this.redoBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'redo', title: tr('hud.title.redo', null, '重做被撤销的操作（Ctrl+Y / Ctrl+Shift+Z）') }, tr('hud.action.redo', null, '重做'));
+    this.clearBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'clear', title: tr('hud.title.clear', null, '删除全部导线（可撤销）') }, tr('hud.action.clear', null, '清空导线'));
+    this.exportBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'export', title: tr('hud.title.export', null, '导出为 .dlab.json 工程文件') }, tr('hud.action.export', null, '导出'));
+    this.importBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'import', title: tr('hud.title.import', null, '从 .dlab.json 工程文件导入') }, tr('hud.action.import', null, '导入'));
+    this.muteBtn = el('button', { type: 'button', className: 'hud-btn', 'data-act': 'mute', title: tr('hud.title.mute', null, '静音 / 取消静音板载音频（蜂鸣器与扬声器）') }, tr('hud.action.mute', null, '静音'));
     this.fileInput = el('input', {
       type: 'file',
       accept: '.json,.dlab.json,application/json',
@@ -131,20 +144,21 @@
     actionGroup.appendChild(this.fileInput);
 
     // —— 透视开关 ——
-    var toggleLabel = el('label', { className: 'hud-toggle', title: '隐藏飞线以便观察面板（仍可接线）' });
+    var toggleLabel = el('label', { className: 'hud-toggle', title: tr('hud.title.toggleWires', null, '隐藏飞线以便观察面板（仍可接线）') });
     this.toggleInput = el('input', { type: 'checkbox', 'data-act': 'toggle' });
     this.toggleInput.checked = true;
     toggleLabel.appendChild(this.toggleInput);
-    toggleLabel.appendChild(el('span', { className: 'hud-toggle-text' }, '显示导线'));
+    this.toggleText = el('span', { className: 'hud-toggle-text' }, tr('hud.toggle.showWires', null, '显示导线'));
+    toggleLabel.appendChild(this.toggleText);
     actionGroup.appendChild(toggleLabel);
 
     this.root.appendChild(actionGroup);
 
     // —— 状态区 ——
     var statusGroup = el('div', { className: 'hud-group hud-status' });
-    this.jackChip = el('span', { className: 'hud-chip hud-chip-jack' }, '未选中插孔');
-    this.countChip = el('span', { className: 'hud-chip hud-chip-count' }, '导线 0');
-    this.messageEl = el('span', { className: 'hud-message' }, '就绪');
+    this.jackChip = el('span', { className: 'hud-chip hud-chip-jack' }, tr('hud.chip.none', null, '未选中插孔'));
+    this.countChip = el('span', { className: 'hud-chip hud-chip-count' }, tr('hud.chip.count', { n: 0 }, '导线 0'));
+    this.messageEl = el('span', { className: 'hud-message' }, tr('common.ready', null, '就绪'));
     this.shortsEl = el('span', { className: 'hud-shorts', 'aria-live': 'polite' });
     statusGroup.appendChild(this.jackChip);
     statusGroup.appendChild(this.countChip);
@@ -243,12 +257,25 @@
    * @param {string} text
    * @param {'info'|'warn'|'error'} [level]
    */
+  /** 把（可能含中文的）任意文案按当前语言翻译后显示 */
+  Hud.prototype._display = function (node, text) {
+    if (!node) return;
+    var translated = (DLab.i18n && typeof DLab.i18n.translateText === 'function')
+      ? DLab.i18n.translateText(text) : text;
+    node.textContent = translated;
+  };
+
   Hud.prototype.setStatus = function (text, level) {
     if (!this.messageEl) {
       return;
     }
     var lv = level || 'info';
-    this.messageEl.textContent = text ? String(text) : '';
+    // 允许传 {key, params, fallback} 以便语言切换后用正确的 key 重译（而非猜测中文片段）
+    var spec = (text && typeof text === 'object' && text.key) ? text : null;
+    this._statusSpec = spec;
+    this._statusText = spec ? (spec.fallback || tr(spec.key, spec.params, '')) : (text ? String(text) : '');
+    this._statusLevel = lv;
+    this._display(this.messageEl, this._statusText);
     this.messageEl.className = 'hud-message is-' + lv;
     // 错误提示保留更久，普通提示自动回落
     if (this._statusTimer) {
@@ -259,10 +286,10 @@
       var self = this;
       this._statusTimer = setTimeout(function () {
         self._statusTimer = 0;
-        if (self.messageEl) {
-          self.messageEl.textContent = '就绪';
-          self.messageEl.className = 'hud-message is-info';
-        }
+        self._statusText = '就绪';
+        self._statusLevel = 'info';
+        self._display(self.messageEl, self._statusText);
+        self.messageEl.className = 'hud-message is-info';
       }, STATUS_TIMEOUT);
     }
   };
@@ -274,10 +301,10 @@
       return;
     }
     if (this.selectedJack) {
-      this.jackChip.textContent = '起点 ' + jackLabel(this.geometry, this.selectedJack);
+      this._display(this.jackChip, tr('hud.chip.from', { jack: jackLabel(this.geometry, this.selectedJack) }, '起点 ' + jackLabel(this.geometry, this.selectedJack)));
       this.jackChip.classList.add('is-active');
     } else {
-      this.jackChip.textContent = '未选中插孔';
+      this._display(this.jackChip, tr('hud.chip.none', null, '未选中插孔'));
       this.jackChip.classList.remove('is-active');
     }
   };
@@ -286,7 +313,7 @@
   Hud.prototype.setWireCount = function (n) {
     this.wireCount = Number(n) || 0;
     if (this.countChip) {
-      this.countChip.textContent = '导线 ' + this.wireCount;
+      this._display(this.countChip, tr('hud.chip.count', { n: this.wireCount }, '导线 ' + this.wireCount));
     }
   };
 
@@ -310,9 +337,70 @@
         names.push(jackLabel(this.geometry, jacks[j]));
       }
     }
-    this.shortsEl.textContent = '⚠ 短路 ' + this.shorts.length + ' 处' + (names.length ? '：' + names.join(' ↔ ') : '');
+    var suffix = names.length
+      ? tr('hud.short.detail', { names: names.join(tr('hud.short.separator', null, ' ↔ ')) }, '：' + names.join(' ↔ '))
+      : '';
+    this._display(this.shortsEl, tr('hud.short.alert', { n: this.shorts.length, suffix: suffix }, '⚠ 短路 ' + this.shorts.length + ' 处' + suffix));
     this.shortsEl.classList.add('is-alert');
     this.root.classList.add('has-short');
+  };
+
+  /** 语言切换后，从保存的原始状态重绘全部可见文案 */
+  Hud.prototype.refreshI18n = function () {
+    // 顶部按钮
+    if (this.undoBtn) this.undoBtn.textContent = tr('hud.action.undo', null, '撤销');
+    if (this.redoBtn) this.redoBtn.textContent = tr('hud.action.redo', null, '重做');
+    if (this.clearBtn) this.clearBtn.textContent = tr('hud.action.clear', null, '清空导线');
+    if (this.exportBtn) this.exportBtn.textContent = tr('hud.action.export', null, '导出');
+    if (this.importBtn) this.importBtn.textContent = tr('hud.action.import', null, '导入');
+    if (this.undoBtn) this.undoBtn.title = tr('hud.title.undo', null, '撤销最近一次接线操作（Ctrl+Z）');
+    if (this.redoBtn) this.redoBtn.title = tr('hud.title.redo', null, '重做被撤销的操作（Ctrl+Y / Ctrl+Shift+Z）');
+    if (this.clearBtn) this.clearBtn.title = tr('hud.title.clear', null, '删除全部导线（可撤销）');
+    if (this.exportBtn) this.exportBtn.title = tr('hud.title.export', null, '导出为 .dlab.json 工程文件');
+    if (this.importBtn) this.importBtn.title = tr('hud.title.import', null, '从 .dlab.json 工程文件导入');
+    if (this.muteBtn) {
+      this.muteBtn.title = tr('hud.title.mute', null, '静音 / 取消静音板载音频（蜂鸣器与扬声器）');
+      var isMuted = !!this._muted;
+      this.muteBtn.textContent = isMuted ? tr('app.btn.unmute', null, '取消静音') : tr('hud.action.mute', null, '静音');
+    }
+    if (this.toggleText) this.toggleText.textContent = tr('hud.toggle.showWires', null, '显示导线');
+    // 色板 tooltip
+    for (var key in this._swatches) {
+      if (!Object.prototype.hasOwnProperty.call(this._swatches, key)) continue;
+      var item = null;
+      for (var i = 0; i < PALETTE.length; i++) {
+        if (PALETTE[i].color === key) { item = PALETTE[i]; break; }
+      }
+      if (!item) continue;
+      var name = tr(item.nameKey, null, item.name);
+      var hint = tr(item.hintKey, null, item.hint);
+      this._swatches[key].title = tr('hud.swatch.title', { name: name, hint: hint, color: item.color }, name + '（' + hint + '） ' + item.color);
+      this._swatches[key].setAttribute('aria-label', name + ' ' + hint);
+    }
+    // 状态区
+    var label = this.root.querySelector('.hud-colors .hud-label');
+    if (label) label.textContent = tr('hud.label.color', null, '导线颜色');
+    this.setSelectedJack(this.selectedJack);
+    this.setWireCount(this.wireCount);
+    this.setShorts(this.shorts);
+    if (this.messageEl) {
+      if (this._statusSpec) {
+        this.messageEl.textContent = tr(this._statusSpec.key, this._statusSpec.params, this._statusSpec.fallback || '');
+      } else {
+        this._display(this.messageEl, this._statusText || tr('common.ready', null, '就绪'));
+      }
+      this.messageEl.className = 'hud-message is-' + (this._statusLevel || 'info');
+    }
+  };
+
+  /** 设置静音按钮状态（由 app.js 的 onMute 调用），供语言切换后正确重绘 */
+  Hud.prototype.setMuted = function (muted) {
+    this._muted = !!muted;
+    if (this.muteBtn) {
+      this.muteBtn.textContent = this._muted
+        ? tr('app.btn.unmute', null, '取消静音')
+        : tr('hud.action.mute', null, '静音');
+    }
   };
 
   /** 当前状态快照（便于自测） */

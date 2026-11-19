@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数字电路实验箱</title>
+<!-- i18n：字典内联在 i18n.js（file:// 下不发起任何网络请求），必须最先加载 -->
+<script src="src/i18n.js"></script>
 <!--
   DLab 数字电路实验箱 —— 应用外壳
   ==================================================
@@ -24,11 +26,16 @@
 
 <!-- ============ 顶部标题栏 ============ -->
 <header id="topbar">
-  <div class="brand">
-    <span class="brand-mark">DLab</span>
-    <span class="brand-title">数字电路实验箱</span>
+  <div class="topbar-left">
+    <div class="brand">
+      <span class="brand-mark">DLab</span>
+      <span class="brand-title" data-i18n="topbar.title">数字电路实验箱</span>
+    </div>
+    <div class="brand-sub" data-i18n="topbar.subtitle">RZ9658 数字电路实验平台</div>
   </div>
-  <div class="brand-sub">RZ9658 数字电路实验平台</div>
+  <button type="button" id="lang-toggle" class="lang-toggle"
+          data-i18n-title="topbar.lang.title" title="切换界面语言"
+          aria-label="Switch interface language">EN</button>
 </header>
 
 <!-- ============ 舞台：面板等比缩放 ============ -->
@@ -46,13 +53,13 @@
 
 <!-- ============ 时序控制条（由 timeline.js 注入内容） ============ -->
 <!-- 虚拟时间轴：驱动时钟输出区与所有时序芯片（74LS74/112/160/161/194/273） -->
-<section id="timeline" aria-label="时序控制"></section>
+<section id="timeline" aria-label="时序控制" data-i18n-aria-label="timeline.aria"></section>
 
 <!-- ============ 底部工具栏（由 hud.js 注入内容） ============ -->
 <footer id="toolbar" data-toolbar></footer>
 
 <!-- ============ AI 助教侧栏（由 advisorPanel.js 注入内容，默认收起） ============ -->
-<aside id="assistant" data-assistant aria-label="AI 助教"></aside>
+<aside id="assistant" data-assistant aria-label="AI 助教" data-i18n-aria-label="assistant.aria"></aside>
 
 <!-- ============ 脚本加载顺序（严格，不可调换） ============ -->
 <!-- 1. 几何数据（构建期从 SVG.SVG 生成，插孔坐标表） -->

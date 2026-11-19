@@ -16,6 +16,12 @@
 
   var DLab = (global.DLab = global.DLab || {});
 
+  /** 翻译辅助：无 i18n 模块时原样返回中文回退 */
+  function tr(key, params, fallback) {
+    return (DLab.i18n && typeof DLab.i18n.t === 'function')
+      ? DLab.i18n.t(key, params, fallback) : fallback;
+  }
+
   /* 面板原始尺寸，与 SVG.SVG 的 viewBox 一致 */
   var PANEL_W = 1800;
   var PANEL_H = 1380;
@@ -64,37 +70,37 @@
     var missing = [];
 
     if (!DLab.panelSvg) {
-      missing.push('缺少面板图形数据：src/panel/panel.annotated.js 未加载或 DLab.panelSvg 为空。');
+      missing.push(tr('app.boot.missingPanelSvg', null, '缺少面板图形数据：src/panel/panel.annotated.js 未加载或 DLab.panelSvg 为空。'));
     }
     if (!DLab.geometry || !DLab.geometry.JACKS) {
-      missing.push('缺少插孔几何数据：src/core/panelGeometry.generated.js 未加载。');
+      missing.push(tr('app.boot.missingGeometry', null, '缺少插孔几何数据：src/core/panelGeometry.generated.js 未加载。'));
     }
     if (!DLab.Engine) {
-      missing.push('缺少仿真引擎：src/core/engine.js 未加载。');
+      missing.push(tr('app.boot.missingEngine', null, '缺少仿真引擎：src/core/engine.js 未加载。'));
     }
     if (!DLab.WireLayer) {
-      missing.push('缺少飞线渲染层：src/ui/wireLayer.js 未加载。');
+      missing.push(tr('app.boot.missingWireLayer', null, '缺少飞线渲染层：src/ui/wireLayer.js 未加载。'));
     }
     if (!DLab.Interaction) {
-      missing.push('缺少接线交互模块：src/ui/interaction.js 未加载。');
+      missing.push(tr('app.boot.missingInteraction', null, '缺少接线交互模块：src/ui/interaction.js 未加载。'));
     }
     if (!DLab.Hud) {
-      missing.push('缺少工具栏模块：src/ui/hud.js 未加载。');
+      missing.push(tr('app.boot.missingHud', null, '缺少工具栏模块：src/ui/hud.js 未加载。'));
     }
     if (!DLab.Persistence) {
-      missing.push('缺少导入导出模块：src/ui/persistence.js 未加载。');
+      missing.push(tr('app.boot.missingPersistence', null, '缺少导入导出模块：src/ui/persistence.js 未加载。'));
     }
     if (!DLab.BoardView) {
-      missing.push('缺少面板视图层：src/boardView.js 未加载。');
+      missing.push(tr('app.boot.missingBoardView', null, '缺少面板视图层：src/boardView.js 未加载。'));
     }
     if (!DLab.BoardControls) {
-      missing.push('缺少板载控件交互层：src/ui/boardControls.js 未加载。');
+      missing.push(tr('app.boot.missingBoardControls', null, '缺少板载控件交互层：src/ui/boardControls.js 未加载。'));
     }
     if (!DLab.Timeline) {
-      missing.push('缺少时序控制模块：src/ui/timeline.js 未加载。');
+      missing.push(tr('app.boot.missingTimeline', null, '缺少时序控制模块：src/ui/timeline.js 未加载。'));
     }
     if (!DLab.ChipTray) {
-      missing.push('缺少芯片插座交互层：src/ui/chipTray.js 未加载。');
+      missing.push(tr('app.boot.missingChipTray', null, '缺少芯片插座交互层：src/ui/chipTray.js 未加载。'));
     }
     // 第四阶段（第一批）：以下模块缺失不阻断启动，只降级对应功能（见 §缺失降级）
     return missing;
@@ -151,25 +157,25 @@
   function checkOptionalDependencies() {
     var degraded = [];
     if (!DLab.Viewport) {
-      degraded.push('缺少视口缩放模块：src/ui/viewport.js 未加载，滚轮缩放不可用。');
+      degraded.push(tr('app.boot.degradedViewport', null, '缺少视口缩放模块：src/ui/viewport.js 未加载，滚轮缩放不可用。'));
     }
     if (!DLab.WireRouting) {
-      degraded.push('缺少飞线避让路由：src/core/wireRouting.js 未加载，飞线回落旧公式。');
+      degraded.push(tr('app.boot.degradedRouting', null, '缺少飞线避让路由：src/core/wireRouting.js 未加载，飞线回落旧公式。'));
     }
     if (!DLab.Advisor || !DLab.Grader || !DLab.Quiz) {
-      degraded.push('缺少 AI 助教逻辑：src/core/advisor.js / grader.js / quiz.js 未加载，审查与打分不可用。');
+      degraded.push(tr('app.boot.degradedAdvisor', null, '缺少 AI 助教逻辑：src/core/advisor.js / grader.js / quiz.js 未加载，审查与打分不可用。'));
     }
     if (!DLab.AdvisorPanel) {
-      degraded.push('缺少 AI 助教侧栏：src/ui/advisorPanel.js 未加载。');
+      degraded.push(tr('app.boot.degradedAdvisorPanel', null, '缺少 AI 助教侧栏：src/ui/advisorPanel.js 未加载。'));
     }
     if (!DLab.Sound) {
-      degraded.push('缺少板载音频模块：src/ui/sound.js 未加载，蜂鸣器与扬声器无声。');
+      degraded.push(tr('app.boot.degradedSound', null, '缺少板载音频模块：src/ui/sound.js 未加载，蜂鸣器与扬声器无声。'));
     }
     if (!DLab.Instruments) {
-      degraded.push('缺少板载仪器交互层：src/ui/instruments.js 未加载，SW1 / 2SS1 / 电位器 / 示波器不可用。');
+      degraded.push(tr('app.boot.degradedInstruments', null, '缺少板载仪器交互层：src/ui/instruments.js 未加载，SW1 / 2SS1 / 电位器 / 示波器不可用。'));
     }
     if (!DLab.TapFeedback) {
-      degraded.push('缺少点击试用层：src/ui/tapFeedback.js 未加载，LED / 蜂鸣器点击试用不可用。');
+      degraded.push(tr('app.boot.degradedTap', null, '缺少点击试用层：src/ui/tapFeedback.js 未加载，LED / 蜂鸣器点击试用不可用。'));
     }
     return degraded;
   }
@@ -251,7 +257,7 @@
           app.engine.removeWire(w.id);
         });
         safeRefresh();
-        if (app.hud) app.hud.setStatus('已清空所有导线', 'info');
+        if (app.hud) app.hud.setStatus(tr('app.status.cleared', null, '已清空所有导线'), 'info');
       },
       onUndo: function () {
         if (app.interaction) app.interaction.undo();
@@ -268,9 +274,10 @@
             // 工程里可能带有开关 / 电源 / 时钟使能，导入后把面板与控件全部同步一遍
             if (app.applyState) app.applyState(app.engine.getState());
             if (app.timeline && app.timeline.refresh) app.timeline.refresh();
-            if (app.hud) app.hud.setStatus('工程导入成功', 'info');
+            if (app.hud) app.hud.setStatus(tr('app.status.imported', null, '工程导入成功'), 'info');
           } else if (app.hud) {
-            app.hud.setStatus('导入失败：' + (res && res.message ? res.message : '未知错误'), 'error');
+            var failMsg = res && res.message ? res.message : '未知错误';
+            app.hud.setStatus(tr('app.status.importFailed', { msg: failMsg }, '导入失败：' + failMsg), 'error');
           }
         });
       },
@@ -281,10 +288,10 @@
         if (!DLab.Sound) return;
         var muted = !DLab.Sound.getMuted();
         DLab.Sound.setMuted(muted);
-        if (app.hud && app.hud.muteBtn) {
-          app.hud.muteBtn.textContent = muted ? '取消静音' : '静音';
+        if (app.hud && typeof app.hud.setMuted === 'function') {
+          app.hud.setMuted(muted);
         }
-        if (app.hud) app.hud.setStatus(muted ? '板载音频已静音' : '板载音频已开启', 'info');
+        if (app.hud) app.hud.setStatus(muted ? tr('app.status.muted', null, '板载音频已静音') : tr('app.status.unmuted', null, '板载音频已开启'), 'info');
       }
     };
   }
@@ -296,7 +303,7 @@
     // ---- 1. 依赖检查 ----
     var missing = checkDependencies();
     if (missing.length) {
-      showBootError('应用无法启动：核心模块缺失', missing);
+      showBootError(tr('app.boot.coreMissing', null, '应用无法启动：核心模块缺失'), missing);
       return;
     }
 
@@ -305,8 +312,8 @@
     var toolbarEl = document.getElementById('toolbar');
 
     if (!panelEl || !wireLayerEl || !toolbarEl) {
-      showBootError('应用无法启动：页面骨架不完整', [
-        'index.html 中缺少 #panel / #wire-layer / #toolbar 节点。'
+      showBootError(tr('app.boot.skeletonIncomplete', null, '应用无法启动：页面骨架不完整'), [
+        tr('app.boot.skeletonDetail', null, 'index.html 中缺少 #panel / #wire-layer / #toolbar 节点。')
       ]);
       return;
     }
@@ -316,7 +323,7 @@
     try {
       panelSvgEl = injectPanelSvg(panelEl);
     } catch (err) {
-      showBootError('应用无法启动：面板图形注入失败', [String(err && err.message ? err.message : err)]);
+      showBootError(tr('app.boot.svgFailed', null, '应用无法启动：面板图形注入失败'), [String(err && err.message ? err.message : err)]);
       return;
     }
 
@@ -563,12 +570,12 @@
       var degraded = checkOptionalDependencies();
       app.hud.setStatus(
         degraded.length
-          ? '部分增强功能不可用：' + degraded.join('；')
-          : '就绪：点击插孔接线（重复接线即取消）、滚轮缩放面板；时序实验请用上方「时序控制」运行',
+          ? { key: 'app.status.degraded', params: { list: degraded.join('；') }, fallback: '部分增强功能不可用：' + degraded.join('；') }
+          : { key: 'app.status.ready', fallback: '就绪：点击插孔接线（重复接线即取消）、滚轮缩放面板；时序实验请用上方「时序控制」运行' },
         degraded.length ? 'warn' : 'info'
       );
     } catch (err) {
-      showBootError('应用初始化失败', [String(err && err.stack ? err.stack : err)]);
+      showBootError(tr('app.boot.initFailed', null, '应用初始化失败'), [String(err && err.stack ? err.stack : err)]);
       return;
     }
 

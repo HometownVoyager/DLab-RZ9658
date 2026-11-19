@@ -48,6 +48,12 @@
     return Object.prototype.hasOwnProperty.call(obj, key);
   }
 
+  /** 翻译辅助：无 i18n 模块（Node 自测）时原样返回中文回退 */
+  function tr(key, params, fallback) {
+    return (DLab.i18n && typeof DLab.i18n.t === 'function')
+      ? DLab.i18n.t(key, params, fallback) : fallback;
+  }
+
   /** 默认 DOM 适配层（可通过构造参数 options.dom 注入替身） */
   var DefaultDom = {
     /** 当前环境是否具备真实 DOM 能力 */
@@ -174,6 +180,15 @@
 
     this._build();
     this.refresh();
+
+    // 语言切换后从自身状态重建控件文案
+    var self = this;
+    if (DLab.i18n && typeof DLab.i18n.onChange === 'function') {
+      DLab.i18n.onChange(function () {
+        self._build();
+        self.refresh();
+      });
+    }
   }
 
   /* ============================================================
@@ -203,28 +218,28 @@
 
     // —— 主控件行 ——
     var row = dom.create('div', { className: 'hud-group timeline-row' });
-    row.appendChild(dom.create('span', { className: 'hud-label' }, '时序控制'));
+    row.appendChild(dom.create('span', { className: 'hud-label' }, tr('timeline.label.title', null, '时序控制')));
 
     nodes.runBtn = dom.create('button', {
       type: 'button',
       className: 'hud-btn timeline-btn-run',
       'data-act': 'run',
-      title: '开始 / 暂停虚拟时间推进'
-    }, '运行');
+      title: tr('timeline.title.run', null, '开始 / 暂停虚拟时间推进')
+    }, tr('timeline.label.run', null, '运行'));
 
     nodes.stepBtn = dom.create('button', {
       type: 'button',
       className: 'hud-btn timeline-btn-step',
       'data-act': 'step',
-      title: '手动推进一个逻辑拍（虚拟时间 +10ms）'
-    }, '单步');
+      title: tr('timeline.title.step', null, '手动推进一个逻辑拍（虚拟时间 +10ms）')
+    }, tr('timeline.label.step', null, '单步'));
 
     nodes.resetBtn = dom.create('button', {
       type: 'button',
       className: 'hud-btn timeline-btn-reset',
       'data-act': 'reset',
-      title: '虚拟时间归零并重新求值'
-    }, '复位时间');
+      title: tr('timeline.title.reset', null, '虚拟时间归零并重新求值')
+    }, tr('timeline.label.reset', null, '复位时间'));
 
     row.appendChild(nodes.runBtn);
     row.appendChild(nodes.stepBtn);
@@ -232,7 +247,7 @@
 
     // —— 速度三档 ——
     var speedGroup = dom.create('div', { className: 'hud-group timeline-speed' });
-    speedGroup.appendChild(dom.create('span', { className: 'hud-label' }, '速度'));
+    speedGroup.appendChild(dom.create('span', { className: 'hud-label' }, tr('timeline.label.speed', null, '速度')));
     nodes.speedBtns = [];
     for (var i = 0; i < SPEED_STEPS.length; i++) {
       var hz = SPEED_STEPS[i];
@@ -241,7 +256,7 @@
         className: 'hud-btn timeline-btn-speed',
         'data-act': 'speed',
         'data-speed': String(hz),
-        title: '仿真速度 ' + hz + ' 倍：1 秒真实时间推进 ' + hz + ' 秒虚拟时间'
+        title: tr('timeline.title.speed', { hz: hz }, '仿真速度 ' + hz + ' 倍：1 秒真实时间推进 ' + hz + ' 秒虚拟时间')
       }, hz + 'x');
       nodes.speedBtns.push(btn);
       speedGroup.appendChild(btn);
@@ -251,7 +266,7 @@
     // —— 时钟使能 ——
     var clockLabel = dom.create('label', {
       className: 'hud-toggle',
-      title: '勾选 = 时钟输出区有信号；取消 = 时钟插孔呈高阻'
+      title: tr('timeline.title.clockEnable', null, '勾选 = 时钟输出区有信号；取消 = 时钟插孔呈高阻')
     });
     nodes.clockInput = dom.create('input', {
       type: 'checkbox',
@@ -259,13 +274,13 @@
       'data-act': 'clock'
     });
     clockLabel.appendChild(nodes.clockInput);
-    clockLabel.appendChild(dom.create('span', { className: 'hud-toggle-text' }, '时钟使能'));
+    clockLabel.appendChild(dom.create('span', { className: 'hud-toggle-text' }, tr('timeline.label.clockEnable', null, '时钟使能')));
     row.appendChild(clockLabel);
 
     // —— 虚拟时间读数 ——
     nodes.timeEl = dom.create('span', {
       className: 'hud-chip timeline-time',
-      title: '虚拟时间（秒）'
+      title: tr('timeline.label.virtualTime', null, '虚拟时间（秒）')
     }, formatSeconds(0));
     row.appendChild(nodes.timeEl);
 
@@ -304,7 +319,7 @@
     var running = !!this.running;
 
     if (n.runBtn) {
-      n.runBtn.textContent = running ? '暂停' : '运行';
+      n.runBtn.textContent = running ? tr('timeline.label.pause', null, '暂停') : tr('timeline.label.run', null, '运行');
       n.runBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
       n.runBtn.classList.toggle('is-active', running);
     }
