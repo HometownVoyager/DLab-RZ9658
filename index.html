@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字电路实验箱</title>
+<!--
+  DLab 数字电路实验箱 —— 应用外壳
+  ==================================================
+  直接双击本文件即可运行（file:// 协议），
+  因此这里不使用 ES Module，全部以经典 script + 全局命名空间 DLab 组织。
+
+  面板外观来自第一阶段产物 SVG.SVG，由 src/panel/panel.annotated.js 以字符串形式注入，
+  保证双击运行时不触发任何本地文件读取（file:// 下 fetch 会被 CORS 拦截）。
+-->
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/wires.css">
+<link rel="stylesheet" href="styles/timeline.css">
+<link rel="stylesheet" href="styles/chips.css">
+<link rel="stylesheet" href="styles/assistant.css">
+<link rel="stylesheet" href="styles/instruments.css">
+</head>
+<body>
+
+<!-- ============ 顶部标题栏 ============ -->
+<header id="topbar">
+  <div class="brand">
+    <span class="brand-mark">DLab</span>
+    <span class="brand-title">数字电路实验箱</span>
+  </div>
+  <div class="brand-sub">RZ9658 数字电路实验平台</div>
+</header>
+
+<!-- ============ 舞台：面板等比缩放 ============ -->
+<!--
+  #stage 负责把 1800x1380 的面板等比缩放并居中；
+  #panel 内部先注入面板 SVG，再叠一层同 viewBox 的 #wire-layer 用于画飞线。
+-->
+<main id="stage">
+  <div id="panel" data-panel-svg>
+    <!-- 面板 SVG 由 src/app.js 注入到本节点之前；此处仅预置覆盖层 -->
+    <svg id="wire-layer" viewBox="0 0 1800 1380" preserveAspectRatio="xMidYMid meet"
+         xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+  </div>
+</main>
+
+<!-- ============ 时序控制条（由 timeline.js 注入内容） ============ -->
+<!-- 虚拟时间轴：驱动时钟输出区与所有时序芯片（74LS74/112/160/161/194/273） -->
+<section id="timeline" aria-label="时序控制"></section>
+
+<!-- ============ 底部工具栏（由 hud.js 注入内容） ============ -->
+<footer id="toolbar" data-toolbar></footer>
+
+<!-- ============ AI 助教侧栏（由 advisorPanel.js 注入内容，默认收起） ============ -->
+<aside id="assistant" data-assistant aria-label="AI 助教"></aside>
+
+<!-- ============ 脚本加载顺序（严格，不可调换） ============ -->
+<!-- 1. 几何数据（构建期从 SVG.SVG 生成，插孔坐标表） -->
+<script src="src/panel/panel.annotated.js"></script>
+<script src="src/core/panelGeometry.generated.js"></script>
+<!-- 2. 仿真层：逻辑原语 → 芯片库 → 引擎 -->
+<script src="src/core/logic.js"></script>
+<script src="src/core/chips.js"></script>
+<script src="src/core/boardNets.js"></script>
+<script src="src/core/wireRouting.js"></script>
+<script src="src/core/engine.js"></script>
+<script src="src/core/advisor.js"></script>
+<script src="src/core/grader.js"></script>
+<script src="src/core/quiz.js"></script>
+<!-- 3. 交互层：飞线渲染 → 接线状态机 → 持久化 → 工具栏 → 板载控件 → 板载音频 → 板载仪器 → 点击试用 → 芯片插座 -->
+<script src="src/ui/wireLayer.js"></script>
+<script src="src/ui/interaction.js"></script>
+<script src="src/ui/persistence.js"></script>
+<script src="src/ui/hud.js"></script>
+<script src="src/ui/boardControls.js"></script>
+<script src="src/ui/sound.js"></script>
+<script src="src/ui/instruments.js"></script>
+<script src="src/ui/tapFeedback.js"></script>
+<script src="src/ui/chipTray.js"></script>
+<script src="src/ui/timeline.js"></script>
+<script src="src/ui/viewport.js"></script>
+<script src="src/ui/advisorPanel.js"></script>
+<!-- 4. 面板视图层：把电平状态映射成 LED / 数码管的视觉变化 -->
+<script src="src/boardView.js"></script>
+<!-- 5. 装配入口 -->
+<script src="src/app.js"></script>
+</body>
+</html>

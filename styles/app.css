@@ -1,0 +1,308 @@
+/* ============================================================
+   app.css —— 应用外壳样式
+   职责：视口重置、页面底色、顶部标题栏、等比缩放舞台
+   注意：飞线与工具栏样式在 wires.css 中（由 wire-ui 维护）
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  /* 深色工作台背景，衬托实验箱面板（浅灰绿），突出实体感 */
+  background:
+    radial-gradient(circle at 50% 0%, #2a2f34 0%, #15181b 55%, #0d0f11 100%);
+  color: #e8ecef;
+  font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 禁止选中文本，避免拖拽接线时选中面板文字 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------------- 顶部标题栏 ---------------- */
+
+#topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px 8px;
+  background: linear-gradient(180deg, #1e2226 0%, #171a1d 100%);
+  border-bottom: 1px solid #30363c;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+}
+
+#topbar .brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+#topbar .brand-mark {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #7fd4a8;
+  text-shadow: 0 0 12px rgba(127, 212, 168, 0.35);
+}
+
+#topbar .brand-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dbe3e8;
+  letter-spacing: 1px;
+}
+
+#topbar .brand-sub {
+  font-size: 12px;
+  color: #7c868f;
+  letter-spacing: 0.5px;
+}
+
+/* ---------------- 舞台：等比缩放 ---------------- */
+
+#stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden;
+}
+
+/*
+  #panel 的尺寸由 src/app.js 按视口大小动态计算后写入 style，
+  保证 1800:1380 的比例不变形，且始终完整可见。
+*/
+#panel {
+  position: relative;
+  flex: 0 0 auto;
+  line-height: 0;
+  /* 面板投影，模拟实验箱摆在台面上的立体感 */
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.62));
+}
+
+/* 注入的面板 SVG：填满 #panel */
+#panel > svg#panel-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 飞线覆盖层：与面板 SVG 完全重合 */
+#panel > svg#wire-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* 默认穿透，避免遮挡面板上的点击；内部可交互元素单独开启 */
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* 覆盖层内部需要接收事件的元素显式开启 */
+#wire-layer [data-jack],
+#wire-layer .wire-path {
+  pointer-events: all;
+}
+
+/* ---------------- 工具栏容器 ---------------- */
+
+#toolbar {
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 8px 18px;
+  background: linear-gradient(180deg, #1b1f23 0%, #131619 100%);
+  border-top: 1px solid #30363c;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---------------- 加载失败提示 ---------------- */
+
+#boot-error {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 14, 16, 0.94);
+  z-index: 999;
+  padding: 40px;
+}
+
+#boot-error .box {
+  max-width: 720px;
+  padding: 26px 30px;
+  border-radius: 10px;
+  background: #1d2226;
+  border: 1px solid #3c444c;
+  line-height: 1.8;
+  font-size: 13.5px;
+  color: #d5dde3;
+}
+
+#boot-error h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  color: #ff7b72;
+}
+
+#boot-error code {
+  background: #101315;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #8fd6a9;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+#boot-error ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+#boot-error li {
+  margin: 4px 0;
+}
+
+/* ---------------- 小屏适配 ---------------- */
+
+@media (max-width: 900px) {
+  #topbar {
+    padding: 8px 14px 6px;
+  }
+  #topbar .brand-title {
+    font-size: 14px;
+  }
+  #topbar .brand-sub {
+    display: none;
+  }
+  #stage {
+    padding: 6px;
+  }
+  #toolbar {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+}
+
+/* ---------------- 视口缩放（src/ui/viewport.js） ---------------- */
+
+/*
+  缩放用 #panel 的 CSS transform 实现（transform-origin 由 JS 设为 0 0）。
+  这里只补「缩放态下的光标与控件」表现，不参与坐标计算。
+*/
+#stage {
+  position: relative;
+}
+
+#panel {
+  transform-origin: 0 0;
+  transition: none;
+}
+
+/*
+  滚轮缩放/平移进行中（viewport.js 加上、静止 220ms 后移除）才提升为合成层，
+  保证交互跟手；静止后图层降级并按当前缩放倍率重新光栅化，
+  避免「放大后整块面板发糊」（全屏因布局尺寸大而不明显）。
+*/
+#panel.is-interacting {
+  will-change: transform;
+}
+
+/* 放大后可以拖动平移：光标提示 */
+#stage.is-pan-ready,
+#stage.is-pan-ready #panel {
+  cursor: grab;
+}
+
+#stage.is-panning,
+#stage.is-panning #panel {
+  cursor: grabbing;
+}
+
+/* 右下角的缩放小控件：与工具栏同一套哑光金属语言 */
+.viewport-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 5px;
+  border-radius: 7px;
+  border: 1px solid #4a4f55;
+  background: linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  line-height: 1;
+  user-select: none;
+}
+
+.viewport-controls .vp-btn {
+  height: 24px;
+  min-width: 24px;
+  padding: 0 7px;
+  border-radius: 4px;
+  border: 1px solid #565c62;
+  background: linear-gradient(180deg, #4a5057 0%, #3a4046 48%, #2c3136 100%);
+  color: #eef1f3;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.viewport-controls .vp-btn:hover {
+  background: linear-gradient(180deg, #565d64 0%, #444b52 48%, #33383e 100%);
+}
+
+.viewport-controls .vp-btn:active {
+  transform: translateY(1px);
+}
+
+.viewport-controls .vp-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+.viewport-controls .vp-label {
+  min-width: 46px;
+  padding: 0 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #b9c1c8;
+  font-variant-numeric: tabular-nums;
+}
+
+.viewport-controls.is-zoomed .vp-label {
+  color: #fde68a;
+}

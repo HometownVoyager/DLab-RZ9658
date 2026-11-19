@@ -1,0 +1,207 @@
+/* ============================================================
+   chips.css —— 芯片插座交互层样式（src/ui/chipTray.js）
+   职责：
+     1. 插座命中区（覆盖层上的透明热区）
+     2. 已插芯片本体（深色 DIP 塑料 + 白色丝印）
+     3. 型号选择浮动菜单
+   视觉纪律（CONTRACTS 第 7 节）：
+     - 不做霓虹发光 / 玻璃拟态 / 大圆角卡片；
+     - 菜单沿用底部工具栏的金属外壳质感，保证只有一套视觉语言。
+   ============================================================ */
+
+/* ---------------- 1. 插座命中区 ---------------- */
+
+#wire-layer .chip-socket-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.6;
+  cursor: pointer;
+  transition: stroke 120ms ease, fill 120ms ease;
+}
+
+/* 悬停：淡蓝描边 + 极淡填充，明确「这里能点」但不遮挡面板丝印 */
+#wire-layer .chip-socket-hit:hover,
+#wire-layer .chip-socket-hit.is-hover {
+  stroke: #60a5fa;
+  fill: rgba(96, 165, 250, 0.1);
+}
+
+#wire-layer .chip-socket-hit:focus-visible {
+  outline: none;
+  stroke: #93c5fd;
+  stroke-width: 2.4;
+  stroke-dasharray: 4 3;
+}
+
+/* 菜单打开时：保持高亮，让学生知道菜单属于哪个插座 */
+#wire-layer .chip-socket-hit.is-open {
+  stroke: #fbbf24;
+  fill: rgba(251, 191, 36, 0.12);
+}
+
+/* 已插芯片：命中区仍是插座的形状，但描边改为暖色，与空插座区分 */
+#wire-layer .chip-socket-hit.is-loaded {
+  stroke: rgba(251, 191, 36, 0.55);
+}
+
+#wire-layer .chip-socket-hit.is-loaded:hover {
+  stroke: #fbbf24;
+}
+
+/* ---------------- 2. 已插芯片本体 ---------------- */
+
+#wire-layer .chip-body-plate {
+  fill: #2b2d30;
+  stroke: #0d0e0f;
+  stroke-width: 1.2;
+}
+
+#wire-layer .chip-body-pin1 {
+  fill: #9ca3af;
+  stroke: none;
+}
+
+#wire-layer .chip-body-label {
+  fill: #e5e7eb;
+  font-family: Consolas, 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+}
+
+/* ---------------- 3. 型号选择菜单 ---------------- */
+
+.chip-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 220px;
+  max-width: 300px;
+  max-height: 60vh;
+  overflow: hidden auto;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #4a4f55;
+  /* 与 #toolbar.hud / .timeline 同一套金属外壳 */
+  background: linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 10px 28px rgba(0, 0, 0, 0.55);
+  color: #e8ebee;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.chip-menu-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.chip-menu-title {
+  font-weight: 600;
+  color: #dbe3e8;
+  letter-spacing: 0.3px;
+}
+
+.chip-menu-sub {
+  font-size: 11.5px;
+  color: #8b959e;
+}
+
+.chip-menu-current {
+  margin: 6px 4px 4px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  font-size: 12px;
+  color: #fde68a;
+}
+
+.chip-menu-current.is-empty {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #98a2ac;
+}
+
+.chip-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.chip-menu-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #dfe5ea;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chip-menu-item:hover,
+.chip-menu-item:focus-visible {
+  outline: none;
+  border-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.16);
+}
+
+.chip-menu-item.is-current {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.chip-menu-model {
+  font-family: Consolas, 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #cfe3f5;
+}
+
+.chip-menu-desc {
+  font-size: 11.5px;
+  color: #98a2ac;
+}
+
+.chip-menu-remove {
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0 0 5px 5px;
+  color: #fca5a5;
+  justify-content: center;
+}
+
+.chip-menu-remove:hover,
+.chip-menu-remove:focus-visible {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.18);
+}
+
+.chip-menu-empty {
+  padding: 8px;
+  color: #98a2ac;
+  font-size: 12px;
+}
+
+/* ---------------- 4. 窄屏 ---------------- */
+
+@media (max-width: 900px) {
+  .chip-menu {
+    min-width: 190px;
+    font-size: 12px;
+  }
+}

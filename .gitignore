@@ -1,0 +1,13 @@
+# Node / tooling
+node_modules/
+*.log
+
+# Dev-only build scripts and browser screenshots (not needed at runtime)
+build/
+artifacts/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

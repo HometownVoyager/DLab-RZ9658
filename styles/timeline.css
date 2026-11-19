@@ -1,0 +1,109 @@
+/* ============================================================
+   timeline.css —— 时序控制面板（虚拟时间轴）样式
+   职责：给 src/ui/timeline.js 自建的控件行提供外壳与状态色。
+   视觉纪律（CONTRACTS 第 7 节）：
+     - 不加霓虹 / 渐变发光 / 扁平卡片风；
+     - 按钮、勾选框直接复用 styles/wires.css 的 .hud-btn / .hud-toggle，
+       本文件只补外壳、状态色与等宽数字读数，保证与底部工具栏同一套观感。
+   ============================================================ */
+
+/* ---------------- 1. 面板外壳 ---------------- */
+
+.timeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #4a4f55;
+  /* 与 #toolbar.hud 同一套金属外壳质感，避免出现第二套视觉语言 */
+  background: linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  color: #e8ebee;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.timeline .timeline-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 分组之间用细竖线分隔（与工具栏颜色板的分隔方式一致） */
+.timeline .timeline-speed {
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* ---------------- 2. 按钮状态 ---------------- */
+
+/* 运行中：绿色键帽（品牌绿的低饱和版本，不做发光） */
+.timeline .timeline-btn-run.is-active {
+  border-color: #4f7f63;
+  background: linear-gradient(180deg, #3d6350 0%, #335244 48%, #284236 100%);
+  color: #eaf6ee;
+}
+
+.timeline .timeline-btn-run.is-active:hover {
+  background: linear-gradient(180deg, #48745d 0%, #3b5f4e 48%, #2f4d3f 100%);
+}
+
+/* 当前速度档：蓝框高亮（与工具栏开关打开态同色系） */
+.timeline .timeline-btn-speed.is-active {
+  border-color: #60a5fa;
+  background: linear-gradient(180deg, #2f4a63 0%, #27405a 48%, #1e3149 100%);
+  color: #eaf2ff;
+}
+
+.timeline .timeline-btn-speed.is-active:hover {
+  background: linear-gradient(180deg, #385774 0%, #2e4c69 48%, #243a55 100%);
+}
+
+/* ---------------- 3. 虚拟时间读数 ---------------- */
+
+.timeline .timeline-time {
+  /* 等宽数字 + 固定最小宽度，避免每帧刷新时数字跳动导致控件抖动 */
+  font-family: Consolas, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  min-width: 84px;
+  justify-content: flex-end;
+  color: #cfe3f5;
+  letter-spacing: 0.5px;
+}
+
+/* ---------------- 4. 窄屏 ---------------- */
+
+@media (max-width: 1100px) {
+  .timeline {
+    gap: 6px 10px;
+    padding: 6px 10px;
+  }
+
+  .timeline .timeline-row {
+    gap: 6px;
+  }
+
+  .timeline .timeline-speed {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .timeline {
+    font-size: 12px;
+  }
+
+  .timeline .timeline-time {
+    min-width: 74px;
+  }
+}

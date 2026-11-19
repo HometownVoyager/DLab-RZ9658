@@ -1,0 +1,419 @@
+/* styles/wires.css
+ * 飞线覆盖层与底部工具栏的样式（wire-ui 负责）。
+ * 视觉基调：与 SVG.SVG 的工业实验箱面板一致——哑光金属、柔和阴影，
+ * 禁止霓虹发光、渐变卡片风。所有规则限定在 #wire-layer / #toolbar.hud 内，
+ * 不干扰 Lead 的 styles/app.css。
+ */
+
+/* ============ 1. 覆盖层 ============ */
+
+#wire-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;          /* 只有命中区与飞线单独开启事件 */
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+#wire-layer.wires-hidden .wire-line,
+#wire-layer.wires-hidden .wire-shadow-line {
+  opacity: 0;
+}
+
+/* 1.1 飞线：杜邦线质感 = 主线 + 下方偏移阴影（阴影由 JS 绘制 path，这里只管观感） */
+#wire-layer .wire-line {
+  stroke-linejoin: round;
+  transition: stroke-width 110ms ease-out, opacity 140ms ease-out;
+}
+
+#wire-layer .wire-shadow-line {
+  transition: stroke-width 110ms ease-out, opacity 140ms ease-out;
+}
+
+/* 悬停：加粗 + 轻微提亮（提亮靠一层描边，不是发光） */
+#wire-layer .wire-line.is-hover {
+  stroke-width: 5;
+  filter: brightness(1.06);
+}
+
+#wire-layer .wire-shadow-line.is-hover {
+  stroke-width: 7;
+}
+
+/* 选中：加粗 + 白色虚线描边，模拟“被捏住的线” */
+#wire-layer .wire-line.is-selected {
+  stroke-width: 4.4;
+  stroke-dasharray: none;
+  paint-order: stroke;
+}
+
+#wire-layer .wire-line.is-selected + .wire-line,
+#wire-layer .wire-line.is-selected {
+  filter: brightness(1.08);
+}
+
+/* 1.2 拖拽预览线：半透明虚线，不做发光 */
+#wire-layer .wire-preview-line {
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 9 7;
+  opacity: 0.85;
+  animation: dlab-dash 900ms linear infinite;
+}
+
+@keyframes dlab-dash {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -32; }
+}
+
+/* 1.3 插孔命中区：默认完全透明，只负责接收事件 */
+#wire-layer .jack-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  cursor: crosshair;
+  transition: r 120ms ease-out, fill 120ms ease-out, stroke 120ms ease-out;
+}
+
+/* 悬停：半径放大到 18（JS 改属性）+ 蓝色描边 */
+#wire-layer .jack-hit.is-hover {
+  fill: rgba(37, 99, 235, 0.14);
+  stroke: rgba(37, 99, 235, 0.92);
+  stroke-width: 2.2;
+}
+
+/* 连线起点：琥珀色实心环 */
+#wire-layer .jack-hit.is-start {
+  fill: rgba(245, 158, 11, 0.22);
+  stroke: #f59e0b;
+  stroke-width: 2.6;
+  stroke-dasharray: 5 4;
+  animation: dlab-ring 1100ms linear infinite;
+}
+
+/* 导线端点（悬停/选中导线时）：浅蓝细环 */
+#wire-layer .jack-hit.is-endpoint {
+  fill: rgba(96, 165, 250, 0.16);
+  stroke: rgba(96, 165, 250, 0.85);
+  stroke-width: 1.8;
+}
+
+@keyframes dlab-ring {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -18; }
+}
+
+/* AI 助教审查告警：琥珀色实心环 + 轻微脉冲（不发光，与哑光金属语言一致） */
+#wire-layer .jack-hit.is-alert {
+  fill: rgba(245, 158, 11, 0.18);
+  stroke: #f59e0b;
+  stroke-width: 2.8;
+  stroke-dasharray: none;
+  animation: dlab-alert-pulse 1400ms ease-in-out infinite;
+}
+
+/* 告警环被选中 / 悬停时优先级更高，仍然是实心环 */
+#wire-layer .jack-hit.is-alert.is-start,
+#wire-layer .jack-hit.is-alert.is-hover {
+  fill: rgba(245, 158, 11, 0.26);
+  stroke: #fbbf24;
+  stroke-width: 3;
+}
+
+/* 轻微脉冲：只改描边宽度与不透明度，不加任何光晕 / 阴影 */
+@keyframes dlab-alert-pulse {
+  0%, 100% { stroke-width: 2.6; fill-opacity: 1; }
+  50% { stroke-width: 3.2; fill-opacity: 0.72; }
+}
+
+/* ============ 2. 底部工具栏 ============ */
+
+#toolbar.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid #4a4f55;
+  background:
+    linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  color: #e8ebee;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#toolbar.hud.has-short {
+  border-color: #b91c1c;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.hud .hud-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud .hud-label {
+  color: #9aa3ab;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* 2.1 颜色板 */
+.hud .hud-colors {
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.hud .hud-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+
+.hud .hud-swatch:hover {
+  transform: translateY(-1px);
+}
+
+.hud .hud-swatch.is-active {
+  border-color: #f8fafc;
+  box-shadow:
+    0 0 0 2px rgba(248, 250, 252, 0.9),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+.hud .hud-swatch:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* 2.2 按钮：金属键帽质感 */
+.hud .hud-btn {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 5px;
+  border: 1px solid #565c62;
+  background: linear-gradient(180deg, #4a5057 0%, #3a4046 48%, #2c3136 100%);
+  color: #eef1f3;
+  font-size: 12.5px;
+  font-family: inherit;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: background 90ms ease-out, transform 60ms ease-out;
+}
+
+.hud .hud-btn:hover {
+  background: linear-gradient(180deg, #565d64 0%, #444b52 48%, #33383e 100%);
+}
+
+.hud .hud-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.55);
+}
+
+.hud .hud-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+/* 隐藏原生 file input，但保留可点击能力 */
+.hud .hud-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 2.3 透视开关 */
+.hud .hud-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  border-radius: 5px;
+  border: 1px solid #4d5359;
+  background: rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.hud .hud-toggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #60a5fa;
+  cursor: pointer;
+}
+
+.hud .hud-toggle-text {
+  font-size: 12.5px;
+  color: #cfd6dc;
+}
+
+/* 2.4 状态区 */
+.hud .hud-status {
+  margin-left: auto;
+  flex: 1 1 420px;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hud .hud-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  color: #b9c1c8;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.hud .hud-chip-jack.is-active {
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(120, 53, 15, 0.35);
+}
+
+.hud .hud-message {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: #cbd5e1;
+}
+
+.hud .hud-message.is-warn {
+  color: #fbbf24;
+}
+
+.hud .hud-message.is-error {
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* 短路告警：红字闪烁（缓慢呼吸，不做霓虹光晕） */
+.hud .hud-shorts {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ef4444;
+  white-space: nowrap;
+}
+
+.hud .hud-shorts.is-alert {
+  animation: dlab-short-blink 900ms steps(1, end) infinite;
+}
+
+@keyframes dlab-short-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.25; }
+}
+
+/* 2.5 透视状态下的提示：颜色板仍然可用，只是画面上的线隐藏了 */
+.hud.is-wires-hidden .hud-toggle {
+  border-color: #60a5fa;
+  background: rgba(37, 99, 235, 0.22);
+}
+
+/* 2.6 窄屏：状态区换行到第二行 */
+@media (max-width: 1100px) {
+  #toolbar.hud {
+    gap: 8px 12px;
+  }
+  .hud .hud-status {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .hud .hud-message {
+    flex: 1 1 240px;
+  }
+}
+
+/* 2.7 尊重系统的减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  #wire-layer .wire-preview-line,
+  #wire-layer .jack-hit.is-start,
+  #wire-layer .jack-hit.is-alert,
+  .hud .hud-shorts.is-alert {
+    animation: none;
+  }
+}
+
+/* ============ 3. 板载机械控件命中区（boardControls） ============ */
+/* 命中区完全透明，只负责接收点击；视觉反馈靠面板 SVG 自身的键帽位移 */
+
+#wire-layer .board-control {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  cursor: pointer;
+  transition: fill 110ms ease-out, stroke 110ms ease-out;
+}
+
+/* 悬停：淡蓝描边，提示「这里可以按」 */
+#wire-layer .board-control:hover,
+#wire-layer .board-control.is-hover {
+  fill: rgba(37, 99, 235, 0.12);
+  stroke: rgba(37, 99, 235, 0.85);
+  stroke-width: 1.8;
+}
+
+#wire-layer .board-control:focus-visible {
+  outline: none;
+  fill: rgba(37, 99, 235, 0.16);
+  stroke: #60a5fa;
+  stroke-width: 2.2;
+}
+
+/* 自锁开关处于「高电平 1」时，命中区给一圈琥珀色细边（与 5L 指示灯呼应） */
+#wire-layer .board-control-switch.is-on {
+  fill: rgba(245, 158, 11, 0.10);
+  stroke: rgba(245, 158, 11, 0.55);
+  stroke-width: 1.6;
+}
+
+/* 轻触按键按下瞬间的收缩反馈 */
+#wire-layer .board-control-pulse:active {
+  fill: rgba(37, 99, 235, 0.22);
+  stroke: rgba(37, 99, 235, 0.95);
+}
+

@@ -1,0 +1,657 @@
+/* styles/assistant.css
+ * AI 助教侧栏样式（ai-ui 负责，契约 docs/STAGE4-CONTRACTS.md §5.4）。
+ * ---------------------------------------------------------------------------
+ * 视觉红线（必须遵守）：
+ *   · 不得霓虹发光、不得荧光描边、不得彩色渐变卡片风；
+ *   · 必须与现有工具栏同一套哑光金属语言（styles/wires.css 的 #toolbar.hud
+ *     与 styles/app.css 的 #toolbar）：同一组线性金属面 + 1px 细描边 +
+ *     内高光/内阴影。侧栏与工具栏的背景渐变逐档同色，一眼看过去是一套东西。
+ * 本文件只提供「样式」；DOM 结构由 src/ui/advisorPanel.js 负责，两边靠类名对齐。
+ *
+ * 布局要点：
+ *   · #assistant 是 position:fixed 的覆盖层容器（宽度 0，不占文档流）；
+ *     抽屉在容器内绝对定位，等效于固定在视口右侧。
+ *   · 容器 pointer-events:none —— 收起时绝不拦截面板点击；
+ *     只有抽屉本体与悬浮开关单独开 pointer-events:auto。
+ *   · 抽屉宽 344px（契约允许 320~380px），从右侧滑入（transform + opacity 过渡）。
+ *   · 抽屉展开时舞台让位、面板等比缩小，保证**侧栏绝不遮挡面板主体**，
+ *     且面板缩放后仍是严格的 1800:1380（飞线命中区与画面永远对齐）。
+ */
+
+/* 侧栏宽度（契约 §5.4：320~380px；窄屏收窄到 320px） */
+:root {
+  --dlab-assistant-width: 344px;
+}
+
+/* ============ 1. 容器（覆盖层，固定在视口右侧） ============ */
+
+#assistant {
+  position: fixed;
+  top: 96px;            /* 会被 advisorPanel._syncGeometry() 覆盖成舞台区域 */
+  right: 0;
+  bottom: auto;
+  height: 60vh;         /* 同上：JS 会写入实际像素值 */
+  width: 0;
+  z-index: 30;
+  /* 容器永远不吃事件：面板其余部分照常点击 */
+  pointer-events: none;
+  color: #e8ebee;
+  font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---------- 1.1 抽屉展开时给舞台让位：保证不遮挡面板主体 ---------- */
+/*
+ * 契约 §5.4 要求侧栏「不要遮挡面板主体」。
+ * 面板是**居中**的（#stage 里 flex 居中），而抽屉固定在视口最右侧，
+ * 窗口较窄时两者必然相交。这里在抽屉展开时：
+ *   1) 给 #stage 加一段右侧内边距 —— 舞台内容区变窄，面板整体左移；
+ *   2) 把 #stage 设为尺寸容器（container-type: size），面板用
+ *      min(100cqw, 100cqh * 1800/1380) 算出新尺寸 —— 面板等比缩到新内容区里，
+ *      绝不溢出、绝不被裁切、绝不出现信箱边（letterbox）。
+ *      两层同 viewBox 的 SVG 一起缩放，命中区与画面永远对齐，
+ *      screenToSvg / hitTest 的坐标链路也完全不受影响（实测误差 0）。
+ * 收起时这两条规则自动失效，布局回到原样（面板尺寸仍由 app.js 的 fitPanel 决定）。
+ *
+ * 说明：`:has()` 与尺寸容器在 Chromium / Edge 105+ 均可用；
+ * 更老的浏览器直接忽略这两条，侧栏依然可用（只是窄窗口下会与面板边缘相交）。
+ */
+body:has(#assistant.is-open) #stage {
+  padding-right: calc(var(--dlab-assistant-width) + 12px);
+  container-type: size;
+  transition: padding-right 240ms cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+
+body:has(#assistant.is-open) #panel {
+  width: min(100cqw, calc(100cqh * 1800 / 1380)) !important;
+  height: auto !important;
+  aspect-ratio: 1800 / 1380;
+  transition: width 240ms cubic-bezier(0.22, 0.7, 0.3, 1),
+              height 240ms cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+
+/* ============ 2. 悬浮开关（侧栏的唯一常驻入口） ============ */
+
+.assistant-fab {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid #4a4f55;
+  background: linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  color: #dbe3e8;
+  font-family: inherit;
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  /* 容器 #assistant 宽度为 0，绝对定位的收缩宽度会被压成最小内容宽，
+     文字会逐字换行（AI/助/教）；必须禁止换行让它按内容自然撑开 */
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: opacity 160ms ease-out, transform 120ms ease-out, background 120ms ease-out;
+}
+
+.assistant-fab:hover {
+  background: linear-gradient(180deg, #3b4147 0%, #2c3136 42%, #23272b 100%);
+  color: #eef1f3;
+}
+
+.assistant-fab:active {
+  transform: translateY(1px);
+}
+
+.assistant-fab:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* 展开时让位给抽屉（避免两个控件叠在一起） */
+.assistant-fab.is-open {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(10px);
+}
+
+/* ============ 3. 抽屉本体（从右侧滑出） ============ */
+
+.assistant-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--dlab-assistant-width);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid #4a4f55;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  /* 与 #toolbar.hud 同一套哑光金属面（逐档同色） */
+  background: linear-gradient(180deg, #33383d 0%, #262a2e 42%, #1d2124 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    -3px 0 10px rgba(0, 0, 0, 0.45);
+  /* 收起态：滑出屏幕 + 透明 + 不可见 */
+  transform: translateX(102%);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 240ms cubic-bezier(0.22, 0.7, 0.3, 1),
+    opacity 170ms ease-out,
+    visibility 0s linear 240ms;
+}
+
+#assistant.is-open .assistant-drawer {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 240ms cubic-bezier(0.22, 0.7, 0.3, 1),
+    opacity 170ms ease-out,
+    visibility 0s;
+}
+
+/* 3.1 标题栏 */
+
+.assistant-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px 9px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.assistant-title-box {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.assistant-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #dbe3e8;
+}
+
+.assistant-sub {
+  font-size: 11.5px;
+  color: #7c868f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assistant-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid #565c62;
+  background: linear-gradient(180deg, #4a5057 0%, #3a4046 48%, #2c3136 100%);
+  color: #eef1f3;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.assistant-close:hover {
+  background: linear-gradient(180deg, #565d64 0%, #444b52 48%, #33383e 100%);
+}
+
+.assistant-close:active {
+  transform: translateY(1px);
+}
+
+.assistant-close:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+/* 3.2 三个动作按钮：审查电路 / 载入题目 / 打分 */
+
+.assistant-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.assistant-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 5px;
+  border: 1px solid #565c62;
+  background: linear-gradient(180deg, #4a5057 0%, #3a4046 48%, #2c3136 100%);
+  color: #eef1f3;
+  font-family: inherit;
+  font-size: 12.5px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: background 100ms ease-out, transform 60ms ease-out;
+}
+
+.assistant-btn:hover {
+  background: linear-gradient(180deg, #565d64 0%, #444b52 48%, #33383e 100%);
+}
+
+.assistant-btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55);
+}
+
+.assistant-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+/* 隐藏原生 file input，但保留可点击能力（与 .hud .hud-file 同一手法） */
+.assistant-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 3.3 主体滚动区 */
+
+.assistant-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.assistant-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.assistant-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.assistant-body::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: #454b51;
+  border: 1px solid #31363b;
+}
+
+/* 3.4 三个分区：问题列表 / 题目信息 / 打分结果 */
+
+.assistant-section {
+  padding: 11px 14px 12px;
+}
+
+.assistant-section + .assistant-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.assistant-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: #9aa3ab;
+}
+
+.assistant-summary {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #b9c1c8;
+  white-space: nowrap;
+}
+
+.assistant-summary.is-error {
+  color: #f87171;
+}
+
+.assistant-summary.is-warn {
+  color: #fbbf24;
+}
+
+.assistant-summary.is-info {
+  color: #93c5fd;
+}
+
+.assistant-summary.is-ok {
+  color: #7fd4a8;
+}
+
+/* ============ 4. 问题列表 ============ */
+
+.assistant-issue {
+  margin: 0 0 6px;
+  padding: 7px 9px 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #3a4046;
+  border-left: 3px solid #5b636b;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 110ms ease-out, border-color 110ms ease-out;
+}
+
+.assistant-issue:hover {
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.assistant-issue:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+.assistant-issue.is-error {
+  border-left-color: #ef4444;
+}
+
+.assistant-issue.is-warn {
+  border-left-color: #f59e0b;
+}
+
+.assistant-issue.is-info {
+  border-left-color: #60a5fa;
+}
+
+.assistant-issue.is-active {
+  border-color: #8b939b;
+  background: rgba(70, 78, 86, 0.5);
+}
+
+.assistant-issue-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.assistant-issue-level {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid #4a5057;
+  background: #2a2f34;
+  color: #cbd5e1;
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.assistant-issue.is-error .assistant-issue-level {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.assistant-issue.is-warn .assistant-issue-level {
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.assistant-issue.is-info .assistant-issue-level {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.assistant-issue-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8ebee;
+}
+
+.assistant-issue-detail {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #aeb8c0;
+  word-break: break-word;
+}
+
+.assistant-issue-hint {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #d9c48c;
+  word-break: break-word;
+}
+
+.assistant-issue-jacks {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #8b949c;
+  font-family: Consolas, "Courier New", monospace;
+  word-break: break-all;
+}
+
+/* 空状态：契约固定的两句文案由 advisorPanel 写入，这里只给外观 */
+
+.assistant-empty {
+  margin: 0;
+  padding: 11px 12px;
+  border-radius: 5px;
+  border: 1px dashed #3f454b;
+  background: rgba(0, 0, 0, 0.18);
+  color: #8f989f;
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* ============ 5. 题目信息 ============ */
+
+.assistant-task-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assistant-task-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8ebee;
+}
+
+.assistant-task-id {
+  font-size: 11px;
+  color: #7c868f;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.assistant-task-desc {
+  margin: 5px 0 7px;
+  font-size: 12px;
+  color: #b9c1c8;
+  line-height: 1.6;
+}
+
+.assistant-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.assistant-task-chip {
+  padding: 1px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  color: #b9c1c8;
+  font-size: 11px;
+}
+
+.assistant-task-io {
+  margin-top: 2px;
+}
+
+.assistant-task-io-line {
+  font-size: 11.5px;
+  color: #9aa3ab;
+  word-break: break-all;
+}
+
+/* ============ 6. 打分结果 ============ */
+
+.assistant-score {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #3f454b;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.assistant-score-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8ebee;
+  font-variant-numeric: tabular-nums;
+}
+
+.assistant-score.is-ok .assistant-score-num {
+  color: #7fd4a8;
+}
+
+.assistant-score.is-bad .assistant-score-num {
+  color: #f87171;
+}
+
+.assistant-score-text {
+  font-size: 12px;
+  color: #b9c1c8;
+}
+
+.assistant-rows {
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.assistant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11.5px;
+  color: #b9c1c8;
+}
+
+.assistant-row-index {
+  color: #7c868f;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.assistant-row-mark {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.assistant-row.is-pass .assistant-row-mark {
+  color: #7fd4a8;
+}
+
+.assistant-row.is-fail .assistant-row-mark {
+  color: #f87171;
+}
+
+/* ============ 7. 底部状态行 ============ */
+
+.assistant-foot {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.assistant-status {
+  font-size: 11.5px;
+  color: #b9c1c8;
+}
+
+.assistant-status.is-warn {
+  color: #fbbf24;
+}
+
+.assistant-status.is-error {
+  color: #f87171;
+}
+
+/* ============ 8. 插孔告警高亮（契约 §3.6 的 .jack-hit.is-alert） ============ */
+/*
+ * 说明：wire-ui 负责在 styles/wires.css 里补这条正式规则；本文件放一份兜底，
+ * 保证「点问题条目 → 插孔亮起」在对方尚未提交时也能看到效果。
+ * 这里的 :where() 让兜底规则的特异性（1,1,0）低于 wire-ui 正式的
+ * `#wire-layer .jack-hit.is-alert`（1,2,0），因此对方一提交就以对方的为准；
+ * 同时它又比 wires.css 的基础规则 `#wire-layer .jack-hit`（1,1,0）更晚出现，
+ * 所以在对方尚未落地时也能压住基础规则。
+ *
+ * 样式取自同一套哑光金属语言：琥珀色实心环 + 缓慢呼吸，**不加任何光晕**。
+ */
+
+#wire-layer :where(.jack-hit).is-alert {
+  fill: rgba(245, 158, 11, 0.18);
+  stroke: #f59e0b;
+  stroke-width: 3;
+  animation: dlab-alert-ring 1100ms linear infinite;
+}
+
+@keyframes dlab-alert-ring {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.45; }
+}
+
+/* ============ 9. 窄屏与动效偏好 ============ */
+
+@media (max-width: 900px) {
+  :root {
+    --dlab-assistant-width: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-drawer,
+  .assistant-fab,
+  #stage,
+  body:has(#assistant.is-open) #panel {
+    transition-duration: 1ms;
+  }
+
+  #wire-layer :where(.jack-hit).is-alert {
+    animation: none;
+  }
+}

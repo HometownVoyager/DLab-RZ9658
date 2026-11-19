@@ -1,0 +1,98 @@
+/* ============================================================
+   styles/instruments.css —— 板载仪器交互层的视觉补充
+   ------------------------------------------------------------
+   覆盖两块内容：
+     1. 飞线覆盖层里板载仪器 / 点击试用命中区的光标与焦点样式；
+     2. 示波器窗口（HTML 层，挂在 body 下，不进面板 SVG）。
+   窗口用固定定位：面板本身会被 viewport 缩放平移，
+   窗口跟随缩放只会让波形糊掉，钉在舞台左上角反而接近
+   真实实验箱「液晶屏固定在面板上」的观感。
+   ============================================================ */
+
+/* —— SVG 命中区 —— */
+.board-instrument,
+.tap-hit {
+  cursor: pointer;
+  outline: none;
+}
+
+.board-instrument:focus-visible,
+.tap-hit:focus-visible {
+  /* 键盘焦点可见性：SVG 元素没有 box-shadow，用双层描边圆/矩形本身表达 */
+  stroke: #f59e0b;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+/* —— 示波器窗口 —— */
+.dlab-scope {
+  position: fixed;
+  left: 16px;
+  top: 64px;
+  width: 324px;
+  background: #0f1418;
+  border: 1px solid #2c3540;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  z-index: 60;
+  user-select: none;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+.dlab-scope-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  color: #cfd8e3;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.dlab-scope-head .dlab-scope-title::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.dlab-scope-close {
+  border: 1px solid #3a4550;
+  background: transparent;
+  color: #9aa7b4;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dlab-scope-close:hover {
+  color: #fff;
+  border-color: #f87171;
+}
+
+.dlab-scope canvas {
+  display: block;
+  margin: 0 10px;
+  border-radius: 4px;
+  background: #0b1210;
+}
+
+.dlab-scope-foot {
+  padding: 6px 12px 9px;
+  color: #8fd48f;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dlab-scope-foot.is-empty {
+  color: #5b6b78;
+}
